@@ -19,10 +19,11 @@ jobs:
         platform: [ubuntu-latest]
     runs-on: ${{ matrix.platform }}
     services:
-      mysql:
+      mysql: # or use https://github.com/mirromutth/mysql-action, remember to turn native off
         image: mysql:5.7
         env:
-          MYSQL_ROOT_PASSWORD: root
+          # MYSQL_ROOT_PASSWORD: root
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
           MYSQL_DATABASE: XXX
         ports:
         - 3306
@@ -62,4 +63,5 @@ jobs:
     - name: Run tests
       shell: bash
       run: |
+        go get -u golang.org/x/lint/golint
         go run test/cmd/main.go scripts/config_github.json
