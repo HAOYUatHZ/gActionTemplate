@@ -1,0 +1,64 @@
+name: Go Test
+on:
+  push:
+    branches:
+    - master
+    - dev
+    - release/*
+  pull_request:
+    branches:
+    - master
+    - dev
+    - release/*
+
+jobs:
+  build:
+    name: Test
+    strategy:
+      matrix:
+        platform: [ubuntu-latest]
+    runs-on: ${{ matrix.platform }}
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          # MYSQL_DATABASE: XXX
+        ports:
+        - 3306
+        # options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+      redis:
+        image: redis
+        ports:
+        - 6379/tcp
+        options: --entrypoint redis-server
+    steps:
+
+    - name: Install Go
+      if: success()
+      uses: actions/setup-go@v1
+      with:
+        go-version: 1.13
+      id: go
+
+    - name: checkout
+      uses: actions/checkout@v1
+      with:
+        token: ${{ secrets.ACCESS_TOKEN }}
+        # path: go/src/github.com/${{ github.repository }}
+        path: go/src/github.com/bytom/ofmf
+
+    - name: setup env
+      shell: bash
+      run: |
+        # echo "::set-env name=GOPATH::${{ github.workspace }}/go"
+        echo "::set-env name=GOPATH::/home/runner/work/ofmf/go"
+        echo "::add-path::${{ github.workspace }}/go/bin"
+
+    # - name: Set up SQL mode
+      # run: mysql --host=localhost --user=root --password=root -e "SET GLOBAL sql_mode = 'STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION';"
+
+    - name: Run tests
+      shell: bash
+      run: |
+        go run test/cmd/main.go scripts/config_github.json
